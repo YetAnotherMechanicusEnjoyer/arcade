@@ -11,9 +11,9 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
-#include <stdexcept>
 #include <dlfcn.h>
 #include "Core.hpp"
+#include "Errors.hpp"
 
 namespace Arcade {
   Core::Core(const std::string& graphicalPath)
@@ -31,34 +31,34 @@ namespace Arcade {
     // open graphic lib
     _graphicHandle = dlopen(path.c_str(), RTLD_LAZY);
     if (!_graphicHandle)
-      throw std::runtime_error(dlerror());
+      throw ARCError(dlerror());
 
     // load getType function of the lib 
     auto getType = reinterpret_cast<GetTypeFn>(dlsym(_graphicHandle, "getType"));
     const char *error = dlerror();
     if (error)
-      throw std::runtime_error(error);
+      throw ARCError(error);
 
     // load the create function of the lib
     auto create = reinterpret_cast<CreateFn>(dlsym(_graphicHandle, "create"));
     error = dlerror();
     if (error)
-      throw std::runtime_error(error);
+      throw ARCError(error);
 
     //load the destroy fun of the lib
     _destroyGraphics = reinterpret_cast<DestroyFn>(dlsym(_graphicHandle, "destroy"));
     error = dlerror();
     if (error)
-      throw std::runtime_error(error);
+      throw ARCError(error);
 
     // Error Handling for wrong lib
     if (getType() != PluginType::Graphics)
-    throw std::runtime_error("'" + path + "' is not a graphical library");
+    throw ARCError("'" + path + "' is not a graphical library");
 
     // create _graphics object for core use
     _graphics = static_cast<IGraphics*>(create());
     if (!_graphics)
-      throw std::runtime_error("failed to create graphics instance");
+      throw ARCError("failed to create graphics instance");
   }
 
   void Core::unloadGraphics()
