@@ -5,8 +5,10 @@
 ** arcade
 */
 
-#include <iostream>
 #include "Core.hpp"
+#include <cstdlib>
+#include <exception>
+#include <iostream>
 
 static unsigned int handle_args(int argc, const char *argv[]) {
   if (argc != 2 || !argv || !argv[1]) {
@@ -33,6 +35,12 @@ int main(int argc, const char *argv[]) {
     case ERROR:
       return ERROR;
     default:
-      return SUCCESS;
-  }
+      try {
+        Arcade::Core core(argv[1]);
+        core.run();
+      } catch (const std::exception &error) {
+          std::cerr << "Error" << error.what() << '\n';
+          return EXIT_FAILURE;
+      }
+    }
 }
