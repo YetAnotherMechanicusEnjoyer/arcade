@@ -7,7 +7,6 @@
 
 #ifndef IGAME
   #define IGAME
-  #include <iostream>
   #include "Common.hpp"
  
 namespace Arcade {

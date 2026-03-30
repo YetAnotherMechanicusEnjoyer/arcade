@@ -10,13 +10,15 @@
   #include <exception>
   #include <string>
 
-class ARCError: public std::exception {
+namespace Arcade {
+class ARCError : public std::exception {
 public:
   ARCError(std::string const &message) : _message(message) {}
   const char *what() const noexcept override { return _message.c_str(); }
 
 private:
-std::string _message;
+  std::string _message;
 };
+}
 
 #endif /* ERRORS */

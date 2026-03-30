@@ -7,7 +7,6 @@
 
 #ifndef IGRAPHICS
   #define IGRAPHICS
-  #include <iostream>
   #include "Common.hpp"
 
 namespace Arcade {
