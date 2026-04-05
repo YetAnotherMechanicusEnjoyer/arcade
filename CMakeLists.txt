@@ -10,7 +10,7 @@ add_compile_options(-Wall -Wextra -Werror)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
