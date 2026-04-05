@@ -6,76 +6,155 @@
 */
 
 #include <memory>
-#include <iostream>
-#include <dlfcn.h>
+#include <algorithm>
 #include "Core.hpp"
+#include "Common.hpp"
 #include "DLLoader.hpp"
-#include "IGame.hpp"
+#include "DirectoryScanner.hpp"
 
 namespace Arcade {
-  /*
-  Core::~Core(){
-    unloadGraphics();
+Core::Core(const std::string& initialGraphicLib) : _state(State::Menu), _currentGraphIdx(0), _currentGameIdx(0), _menuSelectionIdx(0), _isRunning(true) {
+  DirectoryScanner::scan("./lib/", _gameLibs, _graphicalLibs);
+
+  auto it = std::find(_graphicalLibs.begin(), _graphicalLibs.end(), initialGraphicLib);
+  if (it != _graphicalLibs.end()) {
+    _currentGraphIdx = std::distance(_graphicalLibs.begin(), it);
+  } else {
+    _graphicalLibs.insert(_graphicalLibs.begin(), initialGraphicLib);
+    _currentGraphIdx = 0;
   }
 
-  void Core::loadGraphics(const std::string& path){
-    // open graphic lib
-    _graphicHandle = dlopen(path.c_str(), RTLD_LAZY);
-    if (!_graphicHandle)
-      throw ARCError(dlerror());
+  loadGraphics(_currentGraphIdx);
+}
 
-    // load getType function of the lib 
-    auto getType = reinterpret_cast<GetTypeFn>(dlsym(_graphicHandle, "getType"));
-    const char *error = dlerror();
-    if (error)
-      throw ARCError(error);
+Core::~Core() {
+  if (_graph) _graph->shutdown();
+}
 
-    // load the create function of the lib
-    auto create = reinterpret_cast<CreateFn>(dlsym(_graphicHandle, "create"));
-    error = dlerror();
-    if (error)
-      throw ARCError(error);
+void Core::loadGraphics(size_t index) {
+  if (_graphicalLibs.empty() || index >= _graphicalLibs.size()) return;
 
-    //load the destroy fun of the lib
-    _destroyGraphics = reinterpret_cast<DestroyFn>(dlsym(_graphicHandle, "destroy"));
-    error = dlerror();
-    if (error)
-      throw ARCError(error);
+  if (_graph) _graph->shutdown();
 
-    // Error Handling for wrong lib
-    if (getType() != PluginType::Graphics)
-      throw ARCError("'" + path + "' is not a graphical library");
+  _graphLoader = std::make_unique<DLLoader<IGraphics>>(_graphicalLibs[index]);
+  _graph = _graphLoader->getInstance("createGraphics");
+  _graph->init();
+}
 
-    // create _graphics object for core use
-    _graphics = static_cast<IGraphics*>(create());
-    if (!_graphics)
-      throw ARCError("failed to create graphics instance");
+void Core::loadGame(size_t index) {
+  if (_gameLibs.empty() || index >= _gameLibs.size()) return;
+
+  _gameLoader = std::make_unique<DLLoader<IGame>>(_gameLibs[index]);
+  _game = _gameLoader->getInstance("createGame");
+  _game->reset();
+}
+
+void Core::handleGlobalInput(InputAction action) {
+  switch (action) {
+    case InputAction::Exit:
+      _isRunning = false;
+      break;
+    case InputAction::Menu:
+      _state = State::Menu;
+      break;
+    case InputAction::NextGraphics:
+      _currentGraphIdx = (_currentGraphIdx + 1) % _graphicalLibs.size();
+      loadGraphics(_currentGraphIdx);
+      break;
+    case InputAction::PrevGraphics:
+      _currentGraphIdx = (_currentGraphIdx == 0) ? _graphicalLibs.size() - 1 : _currentGraphIdx - 1;
+      loadGraphics(_currentGraphIdx);
+      break;
+    case InputAction::NextGame:
+      if (!_gameLibs.empty()) {
+        _currentGameIdx = (_currentGameIdx + 1) % _gameLibs.size();
+        loadGame(_currentGameIdx);
+      }
+      break;
+    case InputAction::PrevGame:
+      if (!_gameLibs.empty()) {
+        _currentGameIdx = (_currentGameIdx == 0) ? _gameLibs.size() - 1 : _currentGameIdx -1;
+        loadGame(_currentGameIdx);
+      }
+      break;
+    case InputAction::Restart:
+      if (_game) _game->reset();
+      break;
+    default:
+      break;
+  }
+}
+
+std::vector<Cell> Core::stringToCells(const std::string& str, float startX, float startY) {
+  std::vector<Cell> cells;
+  for (size_t i = 0; i < str.length(); ++i) {
+    cells.push_back({startX + static_cast<float>(i), startY, str[i], 0});
+  }
+  return cells;
+}
+
+void Core::runMenu() {
+  InputAction input = _graph->pollEvent();
+  handleGlobalInput(input);
+
+  if (input == InputAction::Down) _menuSelectionIdx = (_menuSelectionIdx + 1) % _gameLibs.size();
+  if (input == InputAction::Up) _menuSelectionIdx = (_menuSelectionIdx == 0) ? _gameLibs.size() - 1 : _menuSelectionIdx - 1;
+
+  if (input == InputAction::Action && !_gameLibs.empty()) {
+    _currentGameIdx = _menuSelectionIdx;
+    loadGame(_currentGameIdx);
+    _state = State::Playing;
   }
 
-  void Core::unloadGraphics()
-  {
-    if (_graphics && _destroyGraphics) {
-      _destroyGraphics(_graphics);
-      _graphics = nullptr;
+  _graph->clear();
+
+  std::vector<Cell> menuRender;
+
+  auto title = stringToCells("--- Arcade Menu ---", 10.0f, 2.0f);
+  menuRender.insert(menuRender.end(), title.begin(), title.end());
+
+  auto nameInfo = stringToCells("Player: " + _playerName, 10.0f, 4.0f);
+  menuRender.insert(menuRender.end(), nameInfo.begin(), nameInfo.end());
+  
+  auto gamesTitle = stringToCells("Available Games:", 10.0f, 6.0f);
+  menuRender.insert(menuRender.end(), gamesTitle.begin(), gamesTitle.end());
+
+  for (size_t i = 0; i < _gameLibs.size(); ++i) {
+    std::string prefix = (i == _menuSelectionIdx) ? ">" : " ";
+    auto gameName = stringToCells(prefix + _gameLibs[i], 12.0f, 8.0f + i);
+    menuRender.insert(menuRender.end(), gameName.begin(), gameName.end());
+  }
+
+  _graph->draw(menuRender);
+  _graph->display();
+}
+
+void Core::runGame() {
+  InputAction input = _graph->pollEvent();
+  handleGlobalInput(input);
+
+  if (_state == State::Playing && _game) {
+    _game->onInput(input);
+    _game->update();
+
+    _graph->clear();
+    _graph->draw(_game->getDisplay());
+
+    auto scoreDisplay = stringToCells("Score: " + std::to_string(_game->getScore()), 0.0f, 0.0f);
+    _graph->draw(scoreDisplay);
+
+    _graph->display();
+  }
+}
+
+void Core::run() {
+  while (_isRunning) {
+    if (_state == State::Menu) {
+      runMenu();
+    } else if (_state == State::Playing) {
+      runGame();
     }
-    _destroyGraphics = nullptr;
-    if (_graphicHandle) {
-      dlclose(_graphicHandle);
-      _graphicHandle = nullptr;
-    }
   }
-  */
+}
 
-  void Core::run() {
-    DLLoader<IGraphics> graphLoader(_graphicalPath);
-    std::unique_ptr<IGraphics> graphLib = graphLoader.getInstance("entryPoint");
-
-    //temporary
-    std::cout << "Graphics library loaded successfully\n";
-
-    std::string game = "snake"; // todo
-    DLLoader<IGame> gameLoader("./lib/Core" + game + ".so");
-
-    // todo
-  }
 } 
