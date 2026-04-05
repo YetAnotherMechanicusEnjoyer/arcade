@@ -18,19 +18,19 @@ add_executable(arcade ${SOURCES})
 
 target_link_libraries(arcade PRIVATE ${CMAKE_DL_LIBS})
 
-macro(add_arcade_library target_name src_files)
+macro(add-arcade-library target_name src_files)
   add_library(${target_name} SHARED ${src_files})
   set_target_properties(${target_name} PROPERTIES PREFIX "")
 endmacro()
 
-#add_arcade_library(arcade_ncurses "src/graphicals/Ncurses/NcursesModule.cpp")
+#add-arcade-library(arcade_ncurses "src/graphicals/Ncurses/NcursesModule.cpp")
 #target_link_libraries(arcade_ncurses ncurses)
 
-#add_arcade_library(arcade_sdl2 "src/graphicals/Ncurses/Sdl2/Sdl2Module.cpp")
+#add-arcade-library(arcade_sdl2 "src/graphicals/Ncurses/Sdl2/Sdl2Module.cpp")
 #target_link_libraries(arcade_sdl2 SDL2)
 
-#add_arcade_library(arcade_sfml "src/graphicals/Sfml/SfmlModule.cpp")
+#add-arcade-library(arcade_sfml "src/graphicals/Sfml/SfmlModule.cpp")
 #target_link_libraries(arcade_sfml sfml-graphics sfml-window sfml-system)
 
-#add_arcade_library(arcade_snake "src/games/Snake/SnakeModule.cpp")
-#add_arcade_library(arcade_pacman "src/games/Pacman/PacmanModule.cpp")
+#add-arcade-library(arcade_snake "src/games/Snake/SnakeModule.cpp")
+#add-arcade-library(arcade_pacman "src/games/Pacman/PacmanModule.cpp")
