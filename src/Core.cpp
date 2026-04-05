@@ -51,7 +51,7 @@ void Core::loadGame(size_t index) {
 
 void Core::handleGlobalInput(InputAction action) {
   switch (action) {
-    case InputAction::Exit:
+    case InputAction::Quit:
       _isRunning = false;
       break;
     case InputAction::Menu:

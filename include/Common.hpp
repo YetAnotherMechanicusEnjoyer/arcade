@@ -18,7 +18,6 @@ namespace Arcade {
   };
 
   enum class InputAction {
-    Exit,
     None,
     Quit,
     NextGraphics,
