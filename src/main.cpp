@@ -7,7 +7,6 @@
 
 #include "Core.hpp"
 #include "Errors.hpp"
-#include <cstdlib>
 #include <iostream>
 
 static unsigned int handle_args(int argc, const char *argv[]) {
@@ -39,13 +38,13 @@ int main(int argc, const char *argv[]) {
         Arcade::Core core(argv[1]);
 
         core.run();
-        return EXIT_SUCCESS;
+        return SUCCESS;
       } catch (const Arcade::ARCError &error) {
         std::cerr << "Error: " << error.what() << std::endl;
-        return EXIT_FAILURE;
+        return ERROR;
       } catch (...) {
         std::cerr << "Uncaught Error." << std::endl;
-        return EXIT_FAILURE;
+        return ERROR;
       }
     }
 }
