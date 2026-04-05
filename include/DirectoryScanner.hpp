@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <filesystem>
@@ -26,9 +27,11 @@ public:
             gameLibs.push_back(filepath);
           } else if (inspector.hasSymbol("createGraphics")) {
             graphicLibs.push_back(filepath);
+          } else {
+            throw ARCError("Invalid symbol");
           }
-        } catch (const ARCError&) {
-
+        } catch (const ARCError& e) {
+          std::cerr << "Error loading " << filepath << ": " << e.what() << std::endl;
         }
       }
     }
