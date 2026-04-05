@@ -6,8 +6,8 @@
 #include "Errors.hpp"
 
 namespace Arcade {
-template <typename T>
 
+template <typename T>
 class DLLoader {
 private:
   void *_handle;
@@ -40,16 +40,22 @@ public:
     return *this;
   }
 
+  bool hasSymbol(const std::string& symbolName) const {
+    dlerror();
+    bool _ = dlsym(_handle, symbolName.c_str());
+    return dlerror() == nullptr;
+  }
+
   std::unique_ptr<T> getInstance(const std::string& entryPointName = "entryPoint") {
     dlerror();
 
-    using EntryPointFunc = T* (*)();
     void* sym = dlsym(_handle, entryPointName.c_str());
 
     const char *dlsym_error = dlerror();
     if (dlsym_error)
       throw ARCError(std::string("dlsym error : ") + dlsym_error);
 
+    using EntryPointFunc = T* (*)();
     EntryPointFunc createFunc = reinterpret_cast<EntryPointFunc>(sym);
 
     return std::unique_ptr<T>(createFunc());
