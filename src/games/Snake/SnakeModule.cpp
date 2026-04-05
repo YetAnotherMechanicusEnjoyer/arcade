@@ -10,7 +10,7 @@ public:
   void update() override {
     return;
   };
-  void onInput(Arcade::InputAction action) override {
+  void onInput(Arcade::InputAction) override {
     return;
   };
   std::vector<Arcade::Cell> getDisplay() const override {
@@ -20,7 +20,7 @@ public:
     return 0;
   };
   std::string getName() const override {
-    return std::string("test");
+    return std::string("Snake");
   };
 };
 

@@ -13,17 +13,17 @@ public:
   void clear() override {
     return;
   };
-  void draw(const std::vector<Arcade::Cell>& cells) override {
+  void draw(const std::vector<Arcade::Cell>&) override {
     return;
   };
   void display() override {
     return;
   };
   Arcade::InputAction pollEvent() override {
-    return Arcade::InputAction::Exit;
+    return Arcade::InputAction::Quit;
   };
   std::string getName() const override {
-    return std::string("todo");
+    return std::string("Ncurses");
   };
 };
 
