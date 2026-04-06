@@ -50,7 +50,7 @@ private:
   std::vector<Cell> stringToCells(const std::string& str, float startX, float startY);
 
 public:
-  explicit Core(const std::string &initalGraphicLib, const std::string& _playerName);
+  explicit Core(const std::string &initalGraphicLib, const std::string& playerName = "Player 1");
   ~Core();
   void run();
 };

@@ -13,7 +13,7 @@
 #include "DirectoryScanner.hpp"
 
 namespace Arcade {
-Core::Core(const std::string& initialGraphicLib, const std::string& playerName = "Player 1") : _state(State::Menu), _currentGraphIdx(0), _currentGameIdx(0), _menuSelectionIdx(0), _playerName(playerName), _isRunning(true) {
+Core::Core(const std::string& initialGraphicLib, const std::string& playerName) : _state(State::Menu), _currentGraphIdx(0), _currentGameIdx(0), _menuSelectionIdx(0), _playerName(playerName), _isRunning(true) {
   DirectoryScanner::scan("./lib/", _gameLibs, _graphicalLibs);
 
   auto it = std::find(_graphicalLibs.begin(), _graphicalLibs.end(), initialGraphicLib);
