@@ -1,5 +1,6 @@
 #include "IGame.hpp"
 
+#include <chrono>
 #include <deque>
 #include <string>
 #include <vector>
@@ -8,6 +9,13 @@ namespace {
 struct GridPos {
     int x;
     int y;
+};
+
+enum class Direction {
+    Up,
+    Down,
+    Left,
+    Right
 };
 
 class SnakeModule : public Arcade::IGame {
@@ -29,14 +37,44 @@ public:
         _snake.push_back({midX - 2, midY});
         _snake.push_back({midX - 3, midY});
         _score = 0;
+        _direction = Direction::Right;
+        _pendingDirection = Direction::Right;
+        _lastStep = std::chrono::steady_clock::now();
     }
 
     void update() override
     {
+        const auto now = std::chrono::steady_clock::now();
+        if (now - _lastStep < kStepDelay) {
+            return;
+        }
+        _lastStep = now;
+        _direction = _pendingDirection;
+        advance();
     }
 
-    void onInput(Arcade::InputAction) override
+    void onInput(Arcade::InputAction action) override
     {
+        switch (action) {
+            case Arcade::InputAction::Up:
+                if (_direction != Direction::Down)
+                    _pendingDirection = Direction::Up;
+                break;
+            case Arcade::InputAction::Down:
+                if (_direction != Direction::Up)
+                    _pendingDirection = Direction::Down;
+                break;
+            case Arcade::InputAction::Left:
+                if (_direction != Direction::Right)
+                    _pendingDirection = Direction::Left;
+                break;
+            case Arcade::InputAction::Right:
+                if (_direction != Direction::Left)
+                    _pendingDirection = Direction::Right;
+                break;
+            default:
+                break;
+        }
     }
 
     std::vector<Arcade::Cell> getDisplay() const override
@@ -78,9 +116,13 @@ private:
     static constexpr int kBoardWidth = 30;
     static constexpr int kBoardHeight = 20;
     static constexpr int kTopOffset = 4;
+    static constexpr auto kStepDelay = std::chrono::milliseconds(140);
 
     std::deque<GridPos> _snake;
     int _score{0};
+    Direction _direction{Direction::Right};
+    Direction _pendingDirection{Direction::Right};
+    std::chrono::steady_clock::time_point _lastStep{};
 
     static Arcade::Cell makeCell(int x, int y, char character, int color)
     {
@@ -93,8 +135,48 @@ private:
             cells.push_back(makeCell(x + static_cast<int>(i), y, text[i], color));
         }
     }
+
+    void advance()
+    {
+        if (_snake.empty()) {
+            return;
+        }
+
+        GridPos next = _snake.front();
+        switch (_direction) {
+            case Direction::Up:
+                --next.y;
+                break;
+            case Direction::Down:
+                ++next.y;
+                break;
+            case Direction::Left:
+                --next.x;
+                break;
+            case Direction::Right:
+                ++next.x;
+                break;
+        }
+
+        const int minX = 1;
+        const int maxX = kBoardWidth - 2;
+        const int minY = 1;
+        const int maxY = kBoardHeight - 2;
+
+        if (next.x < minX)
+            next.x = minX;
+        if (next.x > maxX)
+            next.x = maxX;
+        if (next.y < minY)
+            next.y = minY;
+        if (next.y > maxY)
+            next.y = maxY;
+
+        _snake.push_front(next);
+        _snake.pop_back();
+    }
 };
-}
+} // namespace
 
 extern "C" Arcade::IGame *createGame()
 {
