@@ -123,7 +123,7 @@ void Core::runMenu() {
   menuRender.insert(menuRender.end(), gamesTitle.begin(), gamesTitle.end());
 
   for (size_t i = 0; i < _gameLibs.size(); ++i) {
-    std::string prefix = (i == _menuSelectionIdx) ? ">" : " ";
+    std::string prefix = (i == _menuSelectionIdx) ? "> " : "  ";
     auto gameName = stringToCells(prefix + _gameLibs[i], 12.0f, 8.0f + i);
     menuRender.insert(menuRender.end(), gameName.begin(), gameName.end());
   }
