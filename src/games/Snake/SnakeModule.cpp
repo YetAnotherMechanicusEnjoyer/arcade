@@ -39,6 +39,7 @@ public:
         _snake.push_back({midX - 2, midY});
         _snake.push_back({midX - 3, midY});
         _score = 0;
+        _gameOver = false;
         _direction = Direction::Right;
         _pendingDirection = Direction::Right;
         _lastStep = std::chrono::steady_clock::now();
@@ -47,6 +48,9 @@ public:
 
     void update() override
     {
+        if (_gameOver) {
+            return;
+        }
         const auto now = std::chrono::steady_clock::now();
         if (now - _lastStep < kStepDelay) {
             return;
@@ -86,7 +90,7 @@ public:
 
         appendText(cells, 0, 0, "Snake", 4);
         appendText(cells, 0, 1, "Score: " + std::to_string(_score), 3);
-        appendText(cells, 0, 2, "Skeleton version", 7);
+        appendText(cells, 0, 2, _gameOver ? "Game Over - press R to restart" : "Eat food and avoid collisions", 7);
 
         for (int x = 0; x < kBoardWidth; ++x) {
             cells.push_back(makeCell(x, kTopOffset, '#', 5));
@@ -126,6 +130,7 @@ private:
     std::deque<GridPos> _snake;
     GridPos _food{};
     int _score{0};
+    bool _gameOver{false};
     Direction _direction{Direction::Right};
     Direction _pendingDirection{Direction::Right};
     std::chrono::steady_clock::time_point _lastStep{};
@@ -166,6 +171,16 @@ private:
         _food = candidate;
     }
 
+    bool isBodyCollision(const GridPos &pos) const
+    {
+        for (const GridPos &part : _snake) {
+            if (part.x == pos.x && part.y == pos.y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void advance()
     {
         if (_snake.empty()) {
@@ -193,17 +208,29 @@ private:
         const int minY = 1;
         const int maxY = kBoardHeight - 2;
 
-        if (next.x < minX)
-            next.x = minX;
-        if (next.x > maxX)
-            next.x = maxX;
-        if (next.y < minY)
-            next.y = minY;
-        if (next.y > maxY)
-            next.y = maxY;
+        if (next.x < minX || next.x > maxX || next.y < minY || next.y > maxY) {
+            _gameOver = true;
+            return;
+        }
+
+        bool grows = (next.x == _food.x && next.y == _food.y);
+
+        if (!grows && !_snake.empty()) {
+            GridPos tail = _snake.back();
+            _snake.pop_back();
+            if (isBodyCollision(next)) {
+                _snake.push_back(tail);
+                _gameOver = true;
+                return;
+            }
+            _snake.push_back(tail);
+        } else if (isBodyCollision(next)) {
+            _gameOver = true;
+            return;
+        }
 
         _snake.push_front(next);
-        if (next.x == _food.x && next.y == _food.y) {
+        if (grows) {
             _score += 10;
             spawnFood();
         } else {
