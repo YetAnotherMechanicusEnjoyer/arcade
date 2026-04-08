@@ -40,7 +40,7 @@ public:
 
     void init() override {
         if (_initialized) return;
-        
+
         initscr();
         cbreak();
         noecho();
@@ -48,7 +48,7 @@ public:
         nodelay(stdscr, TRUE);
         curs_set(0);
         start_color();
-        
+
         init_pair(1, COLOR_WHITE, COLOR_BLACK);
         init_pair(2, COLOR_RED, COLOR_BLACK);
         init_pair(3, COLOR_GREEN, COLOR_BLACK);
@@ -56,7 +56,7 @@ public:
         init_pair(5, COLOR_BLUE, COLOR_BLACK);
         init_pair(6, COLOR_MAGENTA, COLOR_BLACK);
         init_pair(7, COLOR_CYAN, COLOR_BLACK);
-        
+
         clear();
         _initialized = true;
     }
@@ -75,15 +75,15 @@ public:
         for (const auto& cell : cells) {
             int y = static_cast<int>(cell.y);
             int x = static_cast<int>(cell.x);
-            
+
             if (x < 0 || y < 0) continue;
-            
+
             if (cell.color > 0 && cell.color <= 7) {
                 attron(COLOR_PAIR(cell.color));
             }
-            
+
             mvaddch(y, x, cell.character);
-            
+
             if (cell.color > 0 && cell.color <= 7) {
                 attroff(COLOR_PAIR(cell.color));
             }
@@ -97,7 +97,7 @@ public:
     Arcade::InputAction pollEvent() override {
         int ch = getch();
         if (ch == ERR) return Arcade::InputAction::None;
-        
+
         return convertKeyToAction(ch);
     }
 
