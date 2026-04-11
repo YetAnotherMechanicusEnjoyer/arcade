@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,7 @@ public:
         _level = 1;
         _score = 0;
         _gameOver = false;
+        _frightenedSteps = 0;
         _playerDirection = Arcade::InputAction::Left;
         _requestedDirection = _playerDirection;
         _lastStep = std::chrono::steady_clock::now();
@@ -49,6 +51,10 @@ public:
             return;
         _lastStep = now;
         movePacman();
+        moveGhosts();
+
+        if (_frightenedSteps > 0)
+            --_frightenedSteps;
     }
 
     void onInput(Arcade::InputAction action) override {
@@ -69,7 +75,7 @@ public:
 
         appendText(cells, 0, 0, "Pacman", 4);
         appendText(cells, 0, 1, "Score: " + std::to_string(_score) + "  Level: " + std::to_string(_level), 3);
-        appendText(cells, 0, 2, "Arrows: move | R: restart | M: menu", 7);
+        appendText(cells, 0, 2, _frightenedSteps > 0 ? "Power mode active" : "Arrows: move | R: restart | M: menu", 7);
 
         for (int y = 0; y < kMapHeight; ++y) {
             for (int x = 0; x < kMapWidth; ++x) {
@@ -86,10 +92,13 @@ public:
             }
         }
 
-        for (const Ghost &ghost : _ghosts)
-            cells.push_back(makeCell(ghost.pos.x, kTopOffset + ghost.pos.y, 'G', 2));
+        for (const Ghost &ghost : _ghosts) {
+            char c = _frightenedSteps > 0 ? 'g' : 'G';
+            int color = _frightenedSteps > 0 ? 6 : 2;
+            cells.push_back(makeCell(ghost.pos.x, kTopOffset + ghost.pos.y, c, color));
+        }
 
-        cells.push_back(makeCell(_pacman.x, kTopOffset + _pacman.y, 'C', 6));
+        cells.push_back(makeCell(_pacman.x, kTopOffset + _pacman.y, 'C', 4));
 
         if (_gameOver)
             appendText(cells, 4, kTopOffset + kMapHeight / 2, "Game Over - press r to restart", 2);
@@ -110,6 +119,7 @@ private:
     static constexpr int kMapHeight = 11;
     static constexpr int kTopOffset = 4;
     static constexpr auto kStepDelay = std::chrono::milliseconds(160);
+    static constexpr int kFrightenedDuration = 35;
 
     std::vector<std::string> _map;
     GridPos _pacman{};
@@ -120,6 +130,7 @@ private:
     int _score{0};
     int _level{1};
     int _pelletsLeft{0};
+    int _frightenedSteps{0};
     bool _gameOver{false};
     std::chrono::steady_clock::time_point _lastStep{};
 
@@ -170,6 +181,7 @@ private:
             Ghost{{10, 5}, {10, 5}, Arcade::InputAction::Up}
         };
         _pelletsLeft = countPellets();
+        _frightenedSteps = 0;
         _lastStep = std::chrono::steady_clock::now();
     }
 
@@ -202,6 +214,72 @@ private:
         return next;
     }
 
+    int distanceToPacman(const GridPos &pos) const {
+        return std::abs(pos.x - _pacman.x) + std::abs(pos.y - _pacman.y);
+    }
+
+    Arcade::InputAction oppositeDirection(Arcade::InputAction direction) const {
+        if (direction == Arcade::InputAction::Up)
+            return Arcade::InputAction::Down;
+        if (direction == Arcade::InputAction::Down)
+            return Arcade::InputAction::Up;
+        if (direction == Arcade::InputAction::Left)
+            return Arcade::InputAction::Right;
+        return Arcade::InputAction::Left;
+    }
+
+    std::vector<Arcade::InputAction> validDirections(const Ghost &ghost) const {
+        std::vector<Arcade::InputAction> dirs;
+        std::vector<Arcade::InputAction> all = {
+            Arcade::InputAction::Up,
+            Arcade::InputAction::Down,
+            Arcade::InputAction::Left,
+            Arcade::InputAction::Right
+        };
+
+        for (Arcade::InputAction dir : all) {
+            GridPos next = nextPosition(ghost.pos, dir);
+
+            if (isWalkable(next))
+                dirs.push_back(dir);
+        }
+        return dirs;
+    }
+
+    Arcade::InputAction chooseGhostDirection(const Ghost &ghost) const {
+        std::vector<Arcade::InputAction> dirs = validDirections(ghost);
+
+        if (dirs.empty())
+            return ghost.direction;
+
+        if (dirs.size() > 1) {
+            Arcade::InputAction reverse = oppositeDirection(ghost.direction);
+            dirs.erase(std::remove(dirs.begin(), dirs.end(), reverse), dirs.end());
+
+            if (dirs.empty())
+                dirs.push_back(reverse);
+        }
+
+        Arcade::InputAction best = dirs.front();
+        int bestScore = distanceToPacman(nextPosition(ghost.pos, best));
+
+        for (Arcade::InputAction dir : dirs) {
+            int score = distanceToPacman(nextPosition(ghost.pos, dir));
+
+            if (_frightenedSteps > 0) {
+                if (score > bestScore) {
+                    best = dir;
+                    bestScore = score;
+                }
+            } else if (score < bestScore) {
+                best = dir;
+                bestScore = score;
+            }
+        }
+
+        return best;
+    }
+
     void consumeTile() {
         char &tile = _map[static_cast<std::size_t>(_pacman.y)][static_cast<std::size_t>(_pacman.x)];
 
@@ -213,6 +291,7 @@ private:
             tile = ' ';
             _score += 50;
             --_pelletsLeft;
+            _frightenedSteps = kFrightenedDuration;
         }
     }
 
@@ -232,6 +311,16 @@ private:
         if (_pelletsLeft <= 0) {
             ++_level;
             startLevel();
+        }
+    }
+
+    void moveGhosts() {
+        for (Ghost &ghost : _ghosts) {
+            ghost.direction = chooseGhostDirection(ghost);
+            GridPos next = nextPosition(ghost.pos, ghost.direction);
+
+            if (isWalkable(next))
+                ghost.pos = next;
         }
     }
 };
