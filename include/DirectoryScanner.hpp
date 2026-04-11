@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 #include <filesystem>
-#include "Errors.hpp"
 #include "DLLoader.hpp"
+#include "Errors.hpp"
 
 namespace Arcade {
 class DirectoryScanner {
@@ -18,8 +18,11 @@ public:
       return;
 
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
-      if (entry.path().extension() == ".so") {
+      std::string extension = entry.path().extension().string();
+
+      if (extension == ".so" || extension == ".dylib") {
         std::string filepath = entry.path().string();
+
         try {
           DLLoader<int> inspector(filepath);
 
@@ -28,7 +31,7 @@ public:
           } else if (inspector.hasSymbol("createGraphics")) {
             graphicLibs.push_back(filepath);
           } else {
-            throw ARCError("Invalid symbol");
+            throw ARCError("Invalid symbol.");
           }
         } catch (const ARCError& e) {
           std::cerr << "Error loading " << filepath << ": " << e.what() << std::endl;
