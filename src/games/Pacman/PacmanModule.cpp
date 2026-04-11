@@ -170,6 +170,15 @@ private:
             Ghost{{10, 5}, {10, 5}, Arcade::InputAction::Up}
         };
         _pelletsLeft = countPellets();
+        _lastStep = std::chrono::steady_clock::now();
+    }
+
+    int wrapX(int x) const {
+        if (x < 0)
+            return kMapWidth - 1;
+        if (x >= kMapWidth)
+            return 0;
+        return x;
     }
 
     bool isWalkable(const GridPos &pos) const {
@@ -189,6 +198,7 @@ private:
             --next.x;
         else if (direction == Arcade::InputAction::Right)
             ++next.x;
+        next.x = wrapX(next.x);
         return next;
     }
 
@@ -218,6 +228,11 @@ private:
             return;
         _pacman = next;
         consumeTile();
+
+        if (_pelletsLeft <= 0) {
+            ++_level;
+            startLevel();
+        }
     }
 };
 }
