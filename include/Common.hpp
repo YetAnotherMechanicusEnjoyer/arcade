@@ -8,6 +8,7 @@
 #ifndef COMMON
   #define COMMON
   #include <cstddef>
+#include <cstdint>
   #include <string>
   #include <vector>
 
@@ -68,7 +69,8 @@ namespace Arcade {
     float x;
     float y;
     char character;
-    int color;
+    std::uint8_t color;
+    std::uint8_t textColor;
   };
 
   struct Drawable {

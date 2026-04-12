@@ -47,7 +47,7 @@ private:
   void runMenu();
   void runGame();
 
-  std::vector<Cell> stringToCells(const std::string& str, float startX, float startY);
+  std::vector<Cell> stringToCells(const std::string& str, float startX, float startY, std::uint8_t color, std::uint8_t textColor);
 
 public:
   explicit Core(const std::string &initalGraphicLib, const std::string& playerName = "Player 1");

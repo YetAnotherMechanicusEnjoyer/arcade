@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 
 namespace Arcade {
 

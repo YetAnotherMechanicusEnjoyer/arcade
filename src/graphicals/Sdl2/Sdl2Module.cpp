@@ -1,4 +1,7 @@
 #include "IGraphic.hpp"
+#include <SDL2/SDL_video.h>
+#include <cstdint>
+#include <vector>
 
 #ifdef __APPLE__
   #include <SDL.h>
@@ -12,6 +15,45 @@
 
 #include <map>
 #include <iostream>
+
+#define COLOR_WHITE {200, 200, 200}
+#define COLOR_RED {200, 0, 0}
+#define COLOR_GREEN {0, 200, 0}
+#define COLOR_YELLOW {200, 200, 0}
+#define COLOR_BLUE {0, 0, 200}
+#define COLOR_MAGENTA {200, 0, 200}
+#define COLOR_CYAN {35, 200, 200}
+
+static std::vector<Uint8> to_rgb(std::uint8_t color) {
+  std::vector<Uint8> rgb;
+
+  switch (color) {
+    case 1:
+      rgb = COLOR_WHITE;
+      break;
+    case 2:
+      rgb = COLOR_RED;
+      break;
+    case 3:
+      rgb = COLOR_GREEN;
+      break;
+    case 4:
+      rgb = COLOR_YELLOW;
+      break;
+    case 5:
+      rgb = COLOR_BLUE;
+      break;
+    case 6:
+      rgb = COLOR_MAGENTA;
+      break;
+    case 7:
+      rgb = COLOR_CYAN;
+      break;
+    default:
+      rgb = {20, 20, 20};
+  }
+  return rgb;
+}
 
 class SDL2Module : public Arcade::IGraphics {
 private:
@@ -72,7 +114,7 @@ public:
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             1280, 720,
-            SDL_WINDOW_MAXIMIZED
+            SDL_WINDOW_RESIZABLE
         );
 
         if (!_window) {
@@ -122,19 +164,15 @@ public:
 
             SDL_Rect rect = {x, y, _cellSize, _cellSize};
 
-            Uint8 r = 0, g = 0, b = 0;
-            if (cell.character == '-' || cell.character == '>') { r = 0; g = 0; b = 100; }
-            else { r = 20; g = 20; b = 20; }
+            std::vector<Uint8> color = to_rgb(cell.color);
+            std::vector<Uint8> textVecColor = to_rgb(cell.textColor);
 
-            SDL_SetRenderDrawColor(_renderer, r, g, b, 255);
+            SDL_SetRenderDrawColor(_renderer, color[0], color[1], color[2], 255);
             SDL_RenderFillRect(_renderer, &rect);
-
-            SDL_SetRenderDrawColor(_renderer, 100, 100, 100, 255);
-            SDL_RenderDrawRect(_renderer, &rect);
 
             if (_font && cell.character != ' ') {
                 char text[2] = {cell.character, '\0'};
-                SDL_Color textColor = {255, 255, 255, 255};
+                SDL_Color textColor = {textVecColor[0], textVecColor[1], textVecColor[2], 255};
 
                 SDL_Surface* surface = TTF_RenderText_Blended(_font, text, textColor);
                 if (surface) {

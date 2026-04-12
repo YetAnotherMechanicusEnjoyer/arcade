@@ -5,6 +5,7 @@
 ** core
 */
 
+#include <cstdint>
 #include <memory>
 #include <algorithm>
 #include "Core.hpp"
@@ -88,10 +89,10 @@ void Core::handleGlobalInput(InputAction action) {
   }
 }
 
-std::vector<Cell> Core::stringToCells(const std::string& str, float startX, float startY) {
+std::vector<Cell> Core::stringToCells(const std::string& str, float startX, float startY, std::uint8_t color, std::uint8_t textColor) {
   std::vector<Cell> cells;
   for (size_t i = 0; i < str.length(); ++i) {
-    cells.push_back({startX + static_cast<float>(i), startY, str[i], 0});
+    cells.push_back({startX + static_cast<float>(i), startY, str[i], color, textColor});
   }
   return cells;
 }
@@ -113,18 +114,18 @@ void Core::runMenu() {
 
   std::vector<Cell> menuRender;
 
-  auto title = stringToCells("--- Arcade Menu ---", 10.0f, 2.0f);
+  auto title = stringToCells("--- Arcade Menu ---", 10.0f, 2.0f, 0, 7);
   menuRender.insert(menuRender.end(), title.begin(), title.end());
 
-  auto nameInfo = stringToCells("Player: " + _playerName, 10.0f, 4.0f);
+  auto nameInfo = stringToCells("Player: " + _playerName, 10.0f, 4.0f, 0, 1);
   menuRender.insert(menuRender.end(), nameInfo.begin(), nameInfo.end());
   
-  auto gamesTitle = stringToCells("Available Games:", 10.0f, 6.0f);
+  auto gamesTitle = stringToCells("Available Games:", 10.0f, 6.0f, 0, 1);
   menuRender.insert(menuRender.end(), gamesTitle.begin(), gamesTitle.end());
 
   for (size_t i = 0; i < _gameLibs.size(); ++i) {
     std::string prefix = (i == _menuSelectionIdx) ? "> " : "  ";
-    auto gameName = stringToCells(prefix + _gameLibs[i], 12.0f, 8.0f + i);
+    auto gameName = stringToCells(prefix + _gameLibs[i], 12.0f, 8.0f + i, (i == _menuSelectionIdx) ? 1 : 0, (i == _menuSelectionIdx) ? 0 : 1);
     menuRender.insert(menuRender.end(), gameName.begin(), gameName.end());
   }
 
@@ -142,9 +143,6 @@ void Core::runGame() {
 
     _graph->clear();
     _graph->draw(_game->getDisplay());
-
-    auto scoreDisplay = stringToCells("Score: " + std::to_string(_game->getScore()), 0.0f, 0.0f);
-    _graph->draw(scoreDisplay);
 
     _graph->display();
   }

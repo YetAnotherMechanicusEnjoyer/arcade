@@ -78,14 +78,14 @@ public:
 
             if (x < 0 || y < 0) continue;
 
-            if (cell.color > 0 && cell.color <= 7) {
-                attron(COLOR_PAIR(cell.color));
+            if (cell.textColor > 0 && cell.textColor <= 7) {
+                attron(COLOR_PAIR(cell.textColor));
             }
 
             mvaddch(y, x, cell.character);
 
-            if (cell.color > 0 && cell.color <= 7) {
-                attroff(COLOR_PAIR(cell.color));
+            if (cell.textColor > 0 && cell.textColor <= 7) {
+                attroff(COLOR_PAIR(cell.textColor));
             }
         }
     }
