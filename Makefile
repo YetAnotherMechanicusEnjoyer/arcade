@@ -15,7 +15,8 @@ GRAPH_DIR	=	graphicals/
 
 
 CORE_FILES	=	main.cpp	\
-							Core.cpp
+							Core.cpp	\
+							MenuSelector.cpp
 CORE				=	$(addprefix $(SRC_DIR), $(CORE_FILES))
 CORE_OBJ		=	$(CORE:%.cpp=$(DIR_OBJ)%.o)
 BINARY			=	arcade
@@ -38,6 +39,11 @@ SDL2_OBJ			=	$(SDL2:%.cpp=$(DIR_OBJ)%.o)
 SDL2_LIB			=	$(LIB_DIR)arcade_sdl2.so
 SDL2_FLAGS		=	-lSDL2 -lSDL2_ttf
 
+SFML				=	$(SRC_DIR)$(GRAPH_DIR)Sfml/SfmlModule.cpp
+SFML_OBJ		=	$(SFML:%.cpp=$(DIR_OBJ)%.o)
+SFML_LIB		=	$(LIB_DIR)arcade_sfml.so
+SFML_FLAGS	=	-lsfml-graphics -lsfml-window -lsfml-system
+
 CPPFLAGS			= -std=c++20 -Iinclude -fPIC -g -Wall -Wextra -Werror
 LDFLAGS_CORE	=	-ldl -rdynamic
 LDFLAGS_LIB		=	-shared
@@ -49,7 +55,7 @@ core: 	$(BINARY)
 
 games:	$(SNAKE_LIB) $(PACMAN_LIB)
 
-graphicals:	$(NCURSES_LIB) $(SDL2_LIB)
+graphicals:	$(NCURSES_LIB) $(SDL2_LIB) $(SFML_LIB)
 
 $(BINARY):	$(CORE_OBJ)
 		@$(CC) $^ -o $@ $(LDFLAGS_CORE)
@@ -75,6 +81,10 @@ $(SDL2_LIB):	$(SDL2_OBJ)
 		@$(CC) $^ -o $@ $(LDFLAGS_LIB) $(SDL2_FLAGS)
 		@echo -e "\x1b[32m[OK] Library $@\x1b[0m"
 
+$(SFML_LIB):	$(SFML_OBJ)
+		@mkdir -p $(dir $(LIB_DIR))
+		@$(CC) $^ -o $@ $(LDFLAGS_LIB) $(SFML_FLAGS)
+		@echo -e "\x1b[32m[OK] Library $@\x1b[0m"
 
 $(DIR_OBJ)%.o:	%.cpp
 		@mkdir -p $(dir $@)
