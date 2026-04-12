@@ -35,8 +35,8 @@ target_link_libraries(arcade_ncurses PRIVATE ncurses)
 add_arcade_library(arcade_sdl2 "src/graphicals/Sdl2/Sdl2Module.cpp")
 target_link_libraries(arcade_sdl2 PRIVATE SDL2 SDL2_ttf)
 
-#add_arcade_library(arcade_sfml "src/graphicals/Sfml/SfmlModule.cpp")
-#target_link_libraries(arcade_sfml sfml-graphics sfml-window sfml-system)
+add_arcade_library(arcade_sfml "src/graphicals/Sfml/SfmlModule.cpp")
+target_link_libraries(arcade_sfml sfml-graphics sfml-window sfml-system)
 
 add_arcade_library(arcade_snake "src/games/Snake/SnakeModule.cpp")
 add_arcade_library(arcade_pacman "src/games/Pacman/PacmanModule.cpp")
